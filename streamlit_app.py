@@ -1,4 +1,4 @@
-﻿import streamlit as st
+import streamlit as st
 from sigtap import app as api
 
 st.set_page_config(page_title='CPD Saúde - SIGTAP', page_icon='✳', layout='wide')
@@ -112,10 +112,29 @@ def show_detail(code):
     groups=[(names.get(k,label(k)),rows) for k,rows in rel.items() if k not in ('modalidade','registro','detalhe')]
     tabs=st.tabs(['Descrição']+[name for name,rows in groups])
     with tabs[0]: st.write(j['descricao'] or 'Descrição não disponível nesta competência.')
-    for tab,(_,rows) in zip(tabs[1:],groups):
+    for tab,(group_name,rows) in zip(tabs[1:],groups):
         with tab:
             for row in rows:
-                st.write(' · '.join(f"**{label(x['campo'])}:** {x['valor']}"+(f" — {x['descricao']}" if x.get('descricao') else '') for x in row))
+                if group_name == 'Compatibilidade':
+                    fields = {x['campo']: x for x in row}
+                    def field_text(key):
+                        field = fields.get(key)
+                        if not field:
+                            if key == 'CO_PROCEDIMENTO_PRINCIPAL': return code + ' - ' + p['NO_PROCEDIMENTO']
+                            return '\u2014'
+                        return field['valor'] + (' \u2014 ' + field['descricao'] if field.get('descricao') else '')
+                    with st.container(border=True):
+                        st.caption('Papel na compatibilidade: ' + field_text('PAPEL_NA_COMPATIBILIDADE'))
+                        st.write('**Procedimento principal:** ' + field_text('CO_PROCEDIMENTO_PRINCIPAL'))
+                        st.write('**Procedimento compat\u00edvel:** ' + field_text('CO_PROCEDIMENTO_COMPATIVEL'))
+                        left, right = st.columns(2)
+                        left.write('**Registro principal:** ' + field_text('CO_REGISTRO_PRINCIPAL'))
+                        right.write('**Registro compat\u00edvel:** ' + field_text('CO_REGISTRO_COMPATIVEL'))
+                        left, right = st.columns(2)
+                        left.write('**Tipo de compatibilidade (c\u00f3digo SIGTAP):** ' + field_text('TP_COMPATIBILIDADE'))
+                        right.write('**Quantidade permitida:** ' + display(fields.get('QT_PERMITIDA', {}).get('valor')))
+                else:
+                    st.write(' \u00b7 '.join(f"**{label(x['campo'])}:** {x['valor']}"+(f" \u2014 {x['descricao']}" if x.get('descricao') else '') for x in row))
 
 if st.session_state.get('selected'):
     try: show_detail(st.session_state.selected)
