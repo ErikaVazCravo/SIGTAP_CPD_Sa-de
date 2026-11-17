@@ -110,6 +110,8 @@ def show_detail(code):
     st.markdown('#### Informações relacionadas')
     names={'cid':'CID','ocupacao':'CBO','leito':'Leito','servico':'Serviço / classificação','habilitacao':'Habilitação','comp_rede':'Redes','origem':'Origem','regra_cond':'Regra condicionada','renases':'Renases','tuss':'TUSS','compativel':'Compatibilidade','sia_sih':'SIA / SIH','incremento':'Incrementos'}
     groups=[(names.get(k,label(k)),rows) for k,rows in rel.items() if k not in ('modalidade','registro','detalhe')]
+    if any(name == 'Compatibilidade' for name, _ in groups):
+        st.caption('Os tipos 1, 2 e 3 seguem o layout distribu\u00eddo com a tabela. C\u00f3digos n\u00e3o identificados devem ser conferidos no SIGTAP; outras normas podem estabelecer exig\u00eancias adicionais.')
     tabs=st.tabs(['Descrição']+[name for name,rows in groups])
     with tabs[0]: st.write(j['descricao'] or 'Descrição não disponível nesta competência.')
     for tab,(group_name,rows) in zip(tabs[1:],groups):
@@ -131,7 +133,10 @@ def show_detail(code):
                         left.write('**Registro principal:** ' + field_text('CO_REGISTRO_PRINCIPAL'))
                         right.write('**Registro compat\u00edvel:** ' + field_text('CO_REGISTRO_COMPATIVEL'))
                         left, right = st.columns(2)
-                        left.write('**Tipo de compatibilidade (c\u00f3digo SIGTAP):** ' + field_text('TP_COMPATIBILIDADE'))
+                        type_code = fields.get('TP_COMPATIBILIDADE', {}).get('valor', '')
+                        type_labels = {'1':'Compat\u00edvel', '2':'Incompat\u00edvel / excludente', '3':'Concomitante'}
+                        type_text = type_labels.get(type_code, 'N\u00e3o identificado no layout oficial; consulte o SIGTAP')
+                        left.write('**Tipo de compatibilidade:** ' + type_text + ' (c\u00f3digo ' + (type_code or '\u2014') + ')')
                         right.write('**Quantidade permitida:** ' + display(fields.get('QT_PERMITIDA', {}).get('valor')))
                 else:
                     st.write(' \u00b7 '.join(f"**{label(x['campo'])}:** {x['valor']}"+(f" \u2014 {x['descricao']}" if x.get('descricao') else '') for x in row))
