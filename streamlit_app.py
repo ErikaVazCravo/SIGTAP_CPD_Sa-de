@@ -111,7 +111,7 @@ def show_detail(code):
     names={'cid':'CID','ocupacao':'CBO','leito':'Leito','servico':'Serviço / classificação','habilitacao':'Habilitação','comp_rede':'Redes','origem':'Origem','regra_cond':'Regra condicionada','renases':'Renases','tuss':'TUSS','compativel':'Compatibilidade','sia_sih':'SIA / SIH','incremento':'Incrementos'}
     groups=[(names.get(k,label(k)),rows) for k,rows in rel.items() if k not in ('modalidade','registro','detalhe')]
     if any(name == 'Compatibilidade' for name, _ in groups):
-        st.caption('Os tipos 1, 2 e 3 seguem o layout distribu\u00eddo com a tabela. C\u00f3digos n\u00e3o identificados devem ser conferidos no SIGTAP; outras normas podem estabelecer exig\u00eancias adicionais.')
+        st.caption('Os tipos 1, 2 e 3 seguem o layout da tabela. O tipo 5 para APAC principal e secund\u00e1rio foi conferido na consulta SIGTAP. Outras regras legais podem estabelecer exig\u00eancias adicionais.')
     tabs=st.tabs(['Descrição']+[name for name,rows in groups])
     with tabs[0]: st.write(j['descricao'] or 'Descrição não disponível nesta competência.')
     for tab,(group_name,rows) in zip(tabs[1:],groups):
@@ -135,7 +135,10 @@ def show_detail(code):
                         left, right = st.columns(2)
                         type_code = fields.get('TP_COMPATIBILIDADE', {}).get('valor', '')
                         type_labels = {'1':'Compat\u00edvel', '2':'Incompat\u00edvel / excludente', '3':'Concomitante'}
-                        type_text = type_labels.get(type_code, 'N\u00e3o identificado no layout oficial; consulte o SIGTAP')
+                        if type_code == '5' and fields.get('CO_REGISTRO_PRINCIPAL', {}).get('valor') == '06' and fields.get('CO_REGISTRO_COMPATIVEL', {}).get('valor') == '07':
+                            type_text = 'Obrigat\u00f3ria (APAC principal x APAC secund\u00e1rio)'
+                        else:
+                            type_text = type_labels.get(type_code, 'N\u00e3o identificado; consulte o SIGTAP')
                         left.write('**Tipo de compatibilidade:** ' + type_text + ' (c\u00f3digo ' + (type_code or '\u2014') + ')')
                         right.write('**Quantidade permitida:** ' + display(fields.get('QT_PERMITIDA', {}).get('valor')))
                 else:
