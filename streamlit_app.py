@@ -3,10 +3,7 @@ from sigtap import app as api
 
 st.set_page_config(page_title='CPD Saúde - SIGTAP', page_icon='✳', layout='wide')
 st.markdown('''<style>
-.stApp {background:#f5f8f6;color:#173b36} .block-container {max-width:1120px;padding-top:2rem}
-h1,h2,h3 {color:#173b36} [data-testid="stForm"] {background:white;border:1px solid #e2ece7;border-radius:16px;padding:24px}
-.stButton button[kind="primary"],.stFormSubmitButton button[kind="primary"] {background:#176f57;border-color:#176f57}
-[data-testid="stMetric"] {background:#f1f7f3;border-radius:10px;padding:14px}
+.block-container {max-width:1120px;padding-top:2rem}
 </style>''', unsafe_allow_html=True)
 st.title('✳ CPD Saúde - SIGTAP')
 st.caption('CONSULTA DE PROCEDIMENTOS DO SUS')
