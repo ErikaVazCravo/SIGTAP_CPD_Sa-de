@@ -108,11 +108,17 @@ def show_detail(code):
     names={'cid':'CID','ocupacao':'CBO','leito':'Leito','servico':'Serviço / classificação','habilitacao':'Habilitação','comp_rede':'Redes','origem':'Origem','regra_cond':'Regra condicionada','renases':'Renases','tuss':'TUSS','compativel':'Compatibilidade','sia_sih':'SIA / SIH','incremento':'Incrementos'}
     groups=[(names.get(k,label(k)),rows) for k,rows in rel.items() if k not in ('modalidade','registro','detalhe')]
     if any(name == 'Compatibilidade' for name, _ in groups):
-        st.caption('Os tipos 1, 2 e 3 seguem o layout da tabela. O tipo 5 para APAC principal e secund\u00e1rio foi conferido na consulta SIGTAP. Outras regras legais podem estabelecer exig\u00eancias adicionais.')
+        st.caption('Os tipos 1, 2 e 3 seguem o layout da tabela. O tipo 5 foi conferido na consulta SIGTAP para APAC principal e secund\u00e1rio. Outras regras legais podem estabelecer exig\u00eancias adicionais.')
     tabs=st.tabs(['Descrição']+[name for name,rows in groups])
     with tabs[0]: st.write(j['descricao'] or 'Descrição não disponível nesta competência.')
     for tab,(group_name,rows) in zip(tabs[1:],groups):
         with tab:
+            if group_name == 'Compatibilidade':
+                type_labels = {'1':'Compat\u00edvel (c\u00f3digo 1)', '2':'Incompat\u00edvel / excludente (c\u00f3digo 2)', '3':'Concomitante (c\u00f3digo 3)', '5':'Obrigat\u00f3ria (c\u00f3digo 5)'}
+                type_codes = sorted({field['valor'] for row in rows for field in row if field['campo'] == 'TP_COMPATIBILIDADE'})
+                selected_type = st.selectbox('Tipo de compatibilidade', [''] + type_codes, format_func=lambda x: type_labels.get(x, 'Todos' if not x else 'N\u00e3o identificado (c\u00f3digo '+x+')'), key='compatibilidade_tipo_'+version+'_'+code)
+                if selected_type:
+                    rows = [row for row in rows if any(field['campo'] == 'TP_COMPATIBILIDADE' and field['valor'] == selected_type for field in row)]
             for row in rows:
                 if group_name == 'Compatibilidade':
                     fields = {x['campo']: x for x in row}
@@ -131,12 +137,8 @@ def show_detail(code):
                         right.write('**Registro compat\u00edvel:** ' + field_text('CO_REGISTRO_COMPATIVEL'))
                         left, right = st.columns(2)
                         type_code = fields.get('TP_COMPATIBILIDADE', {}).get('valor', '')
-                        type_labels = {'1':'Compat\u00edvel', '2':'Incompat\u00edvel / excludente', '3':'Concomitante'}
-                        if type_code == '5' and fields.get('CO_REGISTRO_PRINCIPAL', {}).get('valor') == '06' and fields.get('CO_REGISTRO_COMPATIVEL', {}).get('valor') == '07':
-                            type_text = 'Obrigat\u00f3ria (APAC principal x APAC secund\u00e1rio)'
-                        else:
-                            type_text = type_labels.get(type_code, 'N\u00e3o identificado; consulte o SIGTAP')
-                        left.write('**Tipo de compatibilidade:** ' + type_text + ' (c\u00f3digo ' + (type_code or '\u2014') + ')')
+                        type_text = type_labels.get(type_code, 'N\u00e3o identificado (c\u00f3digo ' + (type_code or '\u2014') + ')')
+                        left.write('**Tipo de compatibilidade:** ' + type_text)
                         right.write('**Quantidade permitida:** ' + display(fields.get('QT_PERMITIDA', {}).get('valor')))
                 else:
                     st.write(' \u00b7 '.join(f"**{label(x['campo'])}:** {x['valor']}"+(f" \u2014 {x['descricao']}" if x.get('descricao') else '') for x in row))
